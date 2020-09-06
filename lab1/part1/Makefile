@@ -8,14 +8,15 @@ CLIENT = "httpclient"
 SERVER = "dtunes.ecn.purdue.edu"
 PORT = "80"
 
-all : client
+all : client test-short
 
 client : httpclient.*.c
-	$(CC) httpclient.*.c -o $(CLIENT) 
+	$(CC) httpclient.*.c -g -Wall -o $(CLIENT) 
 
 #NOTE : This command will write the output to "out1.txt"
 test-short :
 	./$(CLIENT) $(SERVER) $(PORT) /ece463/lab1/path_short.txt > out1.txt
+	cat out1.txt
 
 #NOTE : This command will write the output to "out2.txt"
 test-very-long :
