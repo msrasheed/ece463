@@ -44,8 +44,7 @@ int num_newlines(char * str, int len) {
 }
 
 int http_get_request(int clientfd, char * path, char * npath) {
-  int numbytes;
-  int totbytes;
+  int numbytes, totbytes;
   int clen;
   char buff[MAXLINE];
   char status[4];
@@ -53,27 +52,43 @@ int http_get_request(int clientfd, char * path, char * npath) {
   sprintf(buff, "GET %s HTTP/1.0\r\n\r\n", path);
   write(clientfd, buff, MAXLINE);
 
-  buff[MAXLINE - 1] = '\0';
   status[4] = '\0';
   numbytes = read(clientfd, buff, MAXLINE - 1);
+  buff[numbytes] = '\0';
   strncpy(status, buff + 9, 3);
-  printf("%s\n", status);
-  printf("%s", buff);
+  // printf("%s\n", status);
+  // printf("%s", buff);
 
   char * clenstr = strstr(buff, "Content-Length: ");
   clen = atoi(clenstr + 16);
 
-  char * nnl;
+  char * nnl = NULL;
   while (numbytes > 0) {
     if ((nnl = strstr(buff, "\r\n\r\n")) != NULL) break;
-    numbytes = read(clientfd, buff, MAXLINE - 1);
     printf("%s", buff);
+    numbytes = read(clientfd, buff, MAXLINE - 1);
+    buff[numbytes] = '\0';
   }
 
   buff[nnl - buff] = '\0';
-  printf("%s\n", buff);
+  printf("%s\r\n\r\n", buff);
 
-  if (!strcmp(status, "200")) {
+  nnl += 4;
+  printf("%s", nnl);
+  totbytes = buff + numbytes - nnl;
+
+  if (npath != NULL) {
+    strncpy(npath, nnl, clen - 1);
+  }
+
+  while (totbytes < clen) {
+    numbytes = read(clientfd, buff, MAXLINE - 1);
+    buff[numbytes] = '\0';
+    totbytes += numbytes;
+    printf("%s", buff);
+  }
+
+  if (strcmp(status, "200") != 0) {
     return -1;
   }
 
@@ -107,4 +122,12 @@ int main (int argc, char **argv) {
     exit(0);
   }
 
+  clientfd = open_clientfd(host, port);
+
+  if (clientfd < 0) {
+    printf("Error opening connection 2 \n");
+    exit(0);
+  }
+
+  http_get_request(clientfd, npath, NULL);
 }
