@@ -130,4 +130,6 @@ int main (int argc, char **argv) {
   }
 
   http_get_request(clientfd, npath, NULL);
+
+  return EXIT_SUCCESS;
 }
