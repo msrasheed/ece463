@@ -98,7 +98,7 @@ int http_get_request(int clientfd, char * path, char * npath) {
 int main (int argc, char **argv) {
   if (argc < 4) {
     printf("%d arguments, must have at least 3\n", argc - 1);
-    //return EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   int clientfd, port;
@@ -106,9 +106,9 @@ int main (int argc, char **argv) {
   char *host, *path;
   char npath[MAXLINE];
 
-  host = "dtunes.ecn.purdue.edu";// argv[1];
-  port = 80; //atoi(argv[2]);
-  path = "/ece463/lab1/path_short.txt"; //argv[3];
+  host = argv[1];
+  port = atoi(argv[2]);
+  path = argv[3];
 
   clientfd = open_clientfd(host, port);
 
