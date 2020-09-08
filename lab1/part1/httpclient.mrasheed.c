@@ -44,23 +44,23 @@ int num_newlines(char * str, int len) {
 }
 
 int http_get_request(int clientfd, char * path, char * npath) {
-  int numbytes, totbytes;
-  int clen;
+  int numbytes; //, totbytes;
+  // int clen;
   char buff[MAXLINE];
   char status[4];
 
   sprintf(buff, "GET %s HTTP/1.0\r\n\r\n", path);
-  write(clientfd, buff, MAXLINE);
+  write(clientfd, buff, strlen(buff));
 
-  status[4] = '\0';
+  status[3] = '\0';
   numbytes = read(clientfd, buff, MAXLINE - 1);
   buff[numbytes] = '\0';
   strncpy(status, buff + 9, 3);
   // printf("%s\n", status);
   // printf("%s", buff);
 
-  char * clenstr = strstr(buff, "Content-Length: ");
-  clen = atoi(clenstr + 16);
+  // char * clenstr = strstr(buff, "Content-Length: ");
+  // clen = atoi(clenstr + 16);
 
   char * nnl = NULL;
   while (numbytes > 0) {
@@ -75,16 +75,17 @@ int http_get_request(int clientfd, char * path, char * npath) {
 
   nnl += 4;
   printf("%s", nnl);
-  totbytes = buff + numbytes - nnl;
+  // totbytes = buff + numbytes - nnl;
 
   if (npath != NULL) {
-    strncpy(npath, nnl, clen - 1);
+    strncpy(npath, nnl, strlen(nnl) - 1);
+    npath[strlen(nnl) - 1] = '\0';
   }
 
-  while (totbytes < clen) {
+  while (numbytes != 0) {
     numbytes = read(clientfd, buff, MAXLINE - 1);
     buff[numbytes] = '\0';
-    totbytes += numbytes;
+    // totbytes += numbytes;
     printf("%s", buff);
   }
 

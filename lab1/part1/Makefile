@@ -16,8 +16,12 @@ client : httpclient.*.c
 #NOTE : This command will write the output to "out1.txt"
 test-short :
 	./$(CLIENT) $(SERVER) $(PORT) /ece463/lab1/path_short.txt > out1.txt
-	cat out1.txt
+	diff out1.txt test_short.txt 
 
 #NOTE : This command will write the output to "out2.txt"
 test-very-long :
 	./$(CLIENT) $(SERVER) $(PORT) /ece463/lab1/path_very_long.txt > out2.txt
+	diff out2.txt test_very_long.txt 
+
+mem-test: client
+	valgrind --leak-check=full ./$(CLIENT) $(SERVER) $(PORT) /ece463/lab1/path_very_long.txt > out2.txt 2>vlog.txt
