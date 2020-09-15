@@ -117,6 +117,7 @@ int main(int argc, char **argv) {
       // kill(getppid(), SIGCHLD);
       exit(0);
     }
+    close(connfd);
   }
 
   exit(0);
