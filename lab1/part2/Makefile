@@ -8,10 +8,13 @@ CLIENT = "httpserver"
 SERVER = "localhost"
 PORT = "2094"
 
-all : server test-short
+all : server test
 
-server : httpclient.*.c
-	$(CC) httpclient.*.c -g -Wall -o $(CLIENT) 
+server : httpserver.*.c
+	$(CC) httpserver.*.c -g -Wall -o $(CLIENT) 
+
+test : server
+	./$(CLIENT) $(PORT)
 
 #NOTE : This command will write the output to "out1.txt"
 test-short :
@@ -24,4 +27,4 @@ test-very-long :
 	diff out2.txt test_very_long.txt 
 
 mem-test: server
-	valgrind --leak-check=full ./$(CLIENT) $(SERVER) $(PORT) /ece463/lab1/path_very_long.txt > out2.txt 2>vlog.txt
+	valgrind --leak-check=full --show-leak-kinds=all ./$(CLIENT) $(PORT) 2>vlog.txt
