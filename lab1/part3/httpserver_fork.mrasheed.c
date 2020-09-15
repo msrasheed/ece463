@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #define LISTENQ 10
 #define MAXLINE 256
@@ -88,6 +90,10 @@ int handle_request(int connfd) {
   return 0;
 }
 
+void child_die_signal(int sig) {
+  wait(NULL);
+}
+
 int main(int argc, char **argv) {
   int listenfd, connfd, port, clientlen, pid;
   struct sockaddr_in clientaddr;
@@ -96,6 +102,8 @@ int main(int argc, char **argv) {
     printf("Only %d input args. Need at least 1\n", argc - 1);
     exit(1);
   }
+
+  signal(SIGCHLD, child_die_signal);
 
   port = atoi(argv[1]);
   listenfd = open_listenfd(port);
@@ -106,6 +114,7 @@ int main(int argc, char **argv) {
     if ((pid = fork()) == 0) {
       handle_request(connfd);    
       close(connfd);
+      // kill(getppid(), SIGCHLD);
       exit(0);
     }
   }
