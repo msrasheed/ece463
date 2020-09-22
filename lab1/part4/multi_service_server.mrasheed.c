@@ -161,6 +161,7 @@ int main(int argc, char **argv) {
     }
     else if (FD_ISSET(pingfd, &rdfs)) {
       nbytes = recvfrom(pingfd, pingbuf, MAXLINE - 1, 0, (struct sockaddr *) &clientaddr, (socklen_t *) &clientlen);
+      randval = 0;
       randval = (unsigned char) pingbuf[nbytes - 1];
       randval |= (unsigned char) pingbuf[nbytes - 2] << 8;
       randval |= (unsigned char) pingbuf[nbytes - 3] << 16;
