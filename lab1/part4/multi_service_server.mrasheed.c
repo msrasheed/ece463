@@ -147,9 +147,30 @@ int main(int argc, char **argv) {
     FD_ZERO(&rdfs);
     FD_SET(listenfd, &rdfs);
     FD_SET(pingfd, &rdfs);
-    select(maxfd, &rdfs, NULL, NULL, NULL);
+    int num = select(maxfd, &rdfs, NULL, NULL, NULL);
+    // printf("%d\n", num);
+    // switch (errno) {
+    //   case EBADF:
+    //     printf("%s\n", "EBADF");
+    //     break;
+    //   case EINTR:
+    //     printf("%s\n", "EINTR");
+    //     break;
+    //   case EINVAL:
+    //     printf("%s\n", "EINVAL");
+    //     break;
+    //   case ENOMEM:
+    //     printf("%s\n", "ENOMEM");
+    //     break;
+    // }
+    // errno = 0;
+    if (num == -1) {
+      errno = 0;
+      continue;
+    }
 
     if (FD_ISSET(listenfd, &rdfs)) {
+      // printf("%s\n", "listenfd");
       connfd = accept(listenfd, (struct sockaddr *) &clientaddr, (socklen_t *) &clientlen);
       if ((pid = fork()) == 0) {
         handle_request(connfd);    
@@ -159,7 +180,8 @@ int main(int argc, char **argv) {
       }
       close(connfd);
     }
-    else if (FD_ISSET(pingfd, &rdfs)) {
+    if (FD_ISSET(pingfd, &rdfs)) {
+      // printf("%s\n", "pingfd");
       nbytes = recvfrom(pingfd, pingbuf, MAXLINE - 1, 0, (struct sockaddr *) &clientaddr, (socklen_t *) &clientlen);
       randval = (unsigned char) pingbuf[nbytes - 1];
       randval |= (unsigned char) pingbuf[nbytes - 2] << 8;
