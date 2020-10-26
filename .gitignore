@@ -1,0 +1,7 @@
+*.txt
+*.o
+*.zip
+*.swp
+router
+unit-test
+lab1/*
