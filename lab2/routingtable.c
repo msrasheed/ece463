@@ -116,7 +116,10 @@ void PrintRoutes (FILE* Logfile, int myID){
 	/* ----- PRINT ALL ROUTES TO LOG FILE ----- */
 	int i;
 	int j;
-	for(i = 0; i < NumRoutes; i++){
+	for(i = 0; i < MAX_ROUTERS; i++){
+    if (route_init[i] == ROUTE_ENTRY_EMPTY) {
+      continue;
+    }
 		fprintf(Logfile, "<R%d -> R%d> Path: R%d", myID, routingTable[i].dest_id, myID);
 
 		/* ----- PRINT PATH VECTOR ----- */
