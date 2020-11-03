@@ -1,29 +1,111 @@
 #include "ne.h"
 #include "router.h"
 
+#define ROUTE_ENTRY_EMPTY 0
+#define ROUTE_ENTRY_FILLED 1
 
 /* ----- GLOBAL VARIABLES ----- */
 struct route_entry routingTable[MAX_ROUTERS];
 int NumRoutes;
+uint8_t route_init[MAX_ROUTERS];
 
 
 ////////////////////////////////////////////////////////////////
 void InitRoutingTbl (struct pkt_INIT_RESPONSE *InitResponse, int myID){
 	/* ----- YOUR CODE HERE ----- */
+  int i;
+  for (i = 0; i < MAX_ROUTERS; i++) {
+    route_init[i] = ROUTE_ENTRY_EMPTY;
+  }
+  NumRoutes = 0;
+
+  routingTable[myID].dest_id = myID;
+  routingTable[myID].next_hop = myID;
+  routingTable[myID].cost = 0;
+  routingTable[myID].path_len = 1;
+  routingTable[myID].path[0] = myID;
+  route_init[myID] = ROUTE_ENTRY_FILLED;
+
+  for (i = 0; i < InitResponse->no_nbr; i++) {
+    struct nbr_cost * n = &InitResponse->nbrcost[i];
+    routingTable[n->nbr].dest_id = n->nbr;
+    routingTable[n->nbr].next_hop = n->nbr;
+    routingTable[n->nbr].cost = n->cost;
+    routingTable[n->nbr].path_len = 2;
+    routingTable[n->nbr].path[0] = myID;
+    routingTable[n->nbr].path[1] = n->nbr;
+    route_init[n->nbr] = ROUTE_ENTRY_FILLED;
+  }
+
+  NumRoutes = InitResponse->no_nbr + 1;
 	return;
 }
 
+int idNotInRoute(struct route_entry * re, unsigned int id) {
+  int i;
+  for (i = 0; i < re->path_len; i++) {
+    if (re->path[i] == id)
+      return 0;
+  }
+  return 1;
+}
+
+void copyPath(struct route_entry * dest, struct route_entry * src, int myID) {
+  int j;
+  dest->path_len = src->path_len + 1;
+  dest->path[0] = myID;
+  for (j = 0; j < src->path_len; j++) {
+    dest->path[j + 1] = src->path[j];
+  }
+}
 
 ////////////////////////////////////////////////////////////////
 int UpdateRoutes(struct pkt_RT_UPDATE *RecvdUpdatePacket, int costToNbr, int myID){
 	/* ----- YOUR CODE HERE ----- */
-	return 0;
+  int i;
+  int numflag = RecvdUpdatePacket->no_routes;
+  for (i = 0; i < RecvdUpdatePacket->no_routes; i++) {
+    struct route_entry * re = &RecvdUpdatePacket->route[i];
+    unsigned int ncost = re->cost + costToNbr;
+    if (route_init[re->dest_id] == ROUTE_ENTRY_EMPTY) {
+      routingTable[re->dest_id].dest_id = re->dest_id;
+      routingTable[re->dest_id].next_hop = RecvdUpdatePacket->sender_id;
+      routingTable[re->dest_id].cost = ncost;
+      copyPath(&routingTable[re->dest_id], re, myID);
+      route_init[re->dest_id] = ROUTE_ENTRY_FILLED;
+      NumRoutes++;
+    }
+    else if ((RecvdUpdatePacket->sender_id == routingTable[re->dest_id].next_hop) &&
+                (ncost > routingTable[re->dest_id].cost)) {
+      routingTable[re->dest_id].cost = ncost;
+      copyPath(&routingTable[re->dest_id], re, myID);
+    }
+    else if (ncost < routingTable[re->dest_id].cost && idNotInRoute(re, myID)) {
+      routingTable[re->dest_id].next_hop = RecvdUpdatePacket->sender_id;
+      routingTable[re->dest_id].cost = ncost;
+      copyPath(&routingTable[re->dest_id], re, myID);
+    }
+    else {
+      numflag--;
+    }
+  }
+	return numflag > 0;
 }
 
 
 ////////////////////////////////////////////////////////////////
 void ConvertTabletoPkt(struct pkt_RT_UPDATE *UpdatePacketToSend, int myID){
 	/* ----- YOUR CODE HERE ----- */
+  UpdatePacketToSend->sender_id = myID;
+  UpdatePacketToSend->no_routes = NumRoutes;
+
+  int i, j=0;
+  for (i = 0; i < MAX_ROUTERS; i++) {
+    if (route_init[i] == ROUTE_ENTRY_FILLED) {
+      memcpy(&UpdatePacketToSend->route[j], routingTable + i, sizeof(struct route_entry));
+      j++;
+    }
+  }
 	return;
 }
 
@@ -51,5 +133,11 @@ void PrintRoutes (FILE* Logfile, int myID){
 ////////////////////////////////////////////////////////////////
 void UninstallRoutesOnNbrDeath(int DeadNbr){
 	/* ----- YOUR CODE HERE ----- */
+  int i;
+  for (i = 0; i < MAX_ROUTERS; i++) {
+    if (routingTable[i].next_hop == DeadNbr) {
+      routingTable[i].cost = INFINITY;
+    }
+  }
 	return;
 }
