@@ -9,6 +9,7 @@ FILE * logFile;
 
 struct _neighbors {
   uint8_t isNbr;
+  uint8_t isFailed;
   uint32_t cost;
   int lastUpdate;
 };
@@ -62,6 +63,7 @@ void * udpPollingThread(void * arg) {
 
     pthread_mutex_lock(&lock);
     nbrs[updatePkt.sender_id].lastUpdate = time.tv_sec;
+    nbrs[updatePkt.sender_id].isFailed = 0;
     if (UpdateRoutes(&updatePkt, nbrs[updatePkt.sender_id].cost, routerID)) {
       lastRTChange = time.tv_sec;
       converged_flag = NOT_CONVERGED;
@@ -99,8 +101,11 @@ void * timerPollingThread(void * arg) {
     for (i = 0; i < MAX_ROUTERS; i++) {
       if (!nbrs[i].isNbr) continue;
 
-      if (time.tv_sec - nbrs[i].lastUpdate > FAILURE_DETECTION) {
+      if (time.tv_sec - nbrs[i].lastUpdate > FAILURE_DETECTION && !nbrs[i].isFailed) {
+        nbrs[i].isFailed = 1;
         UninstallRoutesOnNbrDeath(i);     
+        lastRTChange = time.tv_sec;
+        converged_flag = NOT_CONVERGED;
         PrintRoutes(logFile, routerID);
         fflush(logFile);
       }
@@ -126,6 +131,7 @@ int main(int argc, char ** argv) {
   struct pkt_INIT_RESPONSE init_response;
   pthread_t udpThread, timerThread;
   struct timeval time;
+  char logname[14];
 
   if (argc < 5) {
     printf("Usage: ./router <router id> <ne hostname> <ne UDP port> <router UDP port>\n");
@@ -138,7 +144,10 @@ int main(int argc, char ** argv) {
 
   routerID = atoi(argv[1]);
   udpfd = open_udpfd(atoi(argv[4]));
-  logFile = stdout;
+  nbytes = sprintf(logname, "router%d.log", routerID);
+  logname[nbytes] = '\0';
+  logFile = fopen(logname, "w");
+  // logFile = stdout;
 
   if ((hp = gethostbyname(argv[2])) == NULL)
     exit(1);
@@ -161,6 +170,7 @@ int main(int argc, char ** argv) {
   gettimeofday(&time, NULL);
   for (i = 0; i < init_response.no_nbr; i++) {
     nbrs[init_response.nbrcost[i].nbr].isNbr = 1;
+    nbrs[init_response.nbrcost[i].nbr].isFailed = 0;
     nbrs[init_response.nbrcost[i].nbr].cost = init_response.nbrcost[i].cost;
     nbrs[init_response.nbrcost[i].nbr].lastUpdate = time.tv_sec;
   }

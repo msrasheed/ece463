@@ -78,6 +78,7 @@ int UpdateRoutes(struct pkt_RT_UPDATE *RecvdUpdatePacket, int costToNbr, int myI
   for (i = 0; i < RecvdUpdatePacket->no_routes; i++) {
     struct route_entry * re = &RecvdUpdatePacket->route[i];
     unsigned int ncost = re->cost + costToNbr;
+    if (ncost > INFINITY) ncost = INFINITY;
     if (route_init[re->dest_id] == ROUTE_ENTRY_EMPTY) {
       routingTable[re->dest_id].dest_id = re->dest_id;
       routingTable[re->dest_id].next_hop = RecvdUpdatePacket->sender_id;
