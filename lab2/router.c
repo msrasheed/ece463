@@ -101,7 +101,7 @@ void * timerPollingThread(void * arg) {
     for (i = 0; i < MAX_ROUTERS; i++) {
       if (!nbrs[i].isNbr) continue;
 
-      if (time.tv_sec - nbrs[i].lastUpdate > FAILURE_DETECTION && !nbrs[i].isFailed) {
+      if (time.tv_sec - nbrs[i].lastUpdate >= FAILURE_DETECTION && !nbrs[i].isFailed) {
         nbrs[i].isFailed = 1;
         UninstallRoutesOnNbrDeath(i);     
         lastRTChange = time.tv_sec;
@@ -111,7 +111,7 @@ void * timerPollingThread(void * arg) {
       }
     }
 
-    if (time.tv_sec - lastRTChange > CONVERGE_TIMEOUT && !converged_flag) {
+    if (time.tv_sec - lastRTChange >= CONVERGE_TIMEOUT && !converged_flag) {
       converged_flag = CONVERGED;
       fprintf(logFile, "%d:Converged\n", (int) (time.tv_sec - firstRTChange));
       fflush(logFile);
