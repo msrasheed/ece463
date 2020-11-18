@@ -59,10 +59,11 @@ void copyPath(struct route_entry * dest, struct route_entry * src, int myID) {
   }
 }
 
-int isNbrUpdateNecessary(struct route_entry * inre, int cost) {
+int isNbrUpdateNecessary(struct route_entry * inre, int in_cost) {
   int i;
   struct route_entry * stored = &routingTable[inre->dest_id];
-  if (stored->cost != inre->cost + cost) return 1;
+  // printf("%d %d\n", stored->cost, in_cost);
+  if (stored->cost != in_cost) return 1;
   if (stored->path_len != inre->path_len + 1) return 1;
   for (i = 1; i < stored->path_len; i++) {
     if (stored->path[i] != inre->path[i - 1]) return 1;
@@ -79,6 +80,7 @@ int UpdateRoutes(struct pkt_RT_UPDATE *RecvdUpdatePacket, int costToNbr, int myI
     struct route_entry * re = &RecvdUpdatePacket->route[i];
     unsigned int ncost = re->cost + costToNbr;
     if (ncost > INFINITY) ncost = INFINITY;
+
     if (route_init[re->dest_id] == ROUTE_ENTRY_EMPTY) {
       routingTable[re->dest_id].dest_id = re->dest_id;
       routingTable[re->dest_id].next_hop = RecvdUpdatePacket->sender_id;
@@ -88,7 +90,7 @@ int UpdateRoutes(struct pkt_RT_UPDATE *RecvdUpdatePacket, int costToNbr, int myI
       NumRoutes++;
     }
     else if ((RecvdUpdatePacket->sender_id == routingTable[re->dest_id].next_hop && 
-                isNbrUpdateNecessary(re, costToNbr)) || 
+                isNbrUpdateNecessary(re, ncost)) || 
                 (ncost < routingTable[re->dest_id].cost && idNotInRoute(re, myID))) {
       routingTable[re->dest_id].next_hop = RecvdUpdatePacket->sender_id;
       routingTable[re->dest_id].cost = ncost;

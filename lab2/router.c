@@ -67,6 +67,7 @@ void * udpPollingThread(void * arg) {
     if (UpdateRoutes(&updatePkt, nbrs[updatePkt.sender_id].cost, routerID)) {
       lastRTChange = time.tv_sec;
       converged_flag = NOT_CONVERGED;
+      // printf("from update: sender %d\n", updatePkt.sender_id);
       PrintRoutes(logFile, routerID);
       fflush(logFile);
     }
@@ -106,6 +107,7 @@ void * timerPollingThread(void * arg) {
         UninstallRoutesOnNbrDeath(i);     
         lastRTChange = time.tv_sec;
         converged_flag = NOT_CONVERGED;
+        // printf("from dead\n");
         PrintRoutes(logFile, routerID);
         fflush(logFile);
       }
