@@ -1,9 +1,11 @@
 #include "ne.h"
 #include "router.h"
 #include <pthread.h>
+#include <signal.h>
 
 int udpfd, routerID;
 struct sockaddr_in neaddr;
+pthread_t udpThread, timerThread;
 pthread_mutex_t lock;
 FILE * logFile;
 
@@ -81,6 +83,7 @@ void * timerPollingThread(void * arg) {
   struct timeval time;
 
   neaddrlen = sizeof(neaddr);
+  bzero(&updatePktSend, sizeof(struct pkt_RT_UPDATE));
 
   while (1) {
     pthread_mutex_lock(&lock);
@@ -124,6 +127,12 @@ void * timerPollingThread(void * arg) {
   }
 }
 
+void sigintHandler(int val) {
+  fclose(logFile);
+  pthread_cancel(udpThread);
+  pthread_cancel(timerThread);
+}
+
 int main(int argc, char ** argv) {
   int i, neaddrlen, nbytes;
   uint32_t ridToSend;
@@ -131,7 +140,6 @@ int main(int argc, char ** argv) {
   struct hostent *hp;
   // char readbuff[PACKETSIZE];
   struct pkt_INIT_RESPONSE init_response;
-  pthread_t udpThread, timerThread;
   struct timeval time;
   char logname[14];
 
@@ -143,6 +151,8 @@ int main(int argc, char ** argv) {
   for (i = 0; i < MAX_ROUTERS; i++) {
     nbrs[i].isNbr = 0;
   }
+
+  signal(SIGINT, sigintHandler);
 
   routerID = atoi(argv[1]);
   udpfd = open_udpfd(atoi(argv[4]));
