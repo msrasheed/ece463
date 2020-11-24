@@ -93,9 +93,9 @@ int UpdateRoutes(struct pkt_RT_UPDATE *RecvdUpdatePacket, int costToNbr, int myI
       route_init[re->dest_id] = ROUTE_ENTRY_FILLED;
       NumRoutes++;
     }
-    else if ((RecvdUpdatePacket->sender_id == routingTable[re->dest_id].next_hop && 
+    else if (((RecvdUpdatePacket->sender_id == routingTable[re->dest_id].next_hop && 
                 isNbrUpdateNecessary(re, ncost)) || 
-                (ncost < routingTable[re->dest_id].cost && idNotInRoute(re, myID))) {
+                ncost < routingTable[re->dest_id].cost) && idNotInRoute(re, myID)) {
       routingTable[re->dest_id].next_hop = RecvdUpdatePacket->sender_id;
       routingTable[re->dest_id].cost = ncost;
       copyPath(&routingTable[re->dest_id], re, myID);
