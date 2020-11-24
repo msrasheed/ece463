@@ -69,7 +69,7 @@ void * udpPollingThread(void * arg) {
     if (UpdateRoutes(&updatePkt, nbrs[updatePkt.sender_id].cost, routerID)) {
       lastRTChange = time.tv_sec;
       converged_flag = NOT_CONVERGED;
-      // printf("from update: sender %d\n", updatePkt.sender_id);
+      printf("from update: sender %d\n", updatePkt.sender_id);
       PrintRoutes(logFile, routerID);
       fflush(logFile);
     }
@@ -86,19 +86,6 @@ void * timerPollingThread(void * arg) {
   bzero(&updatePktSend, sizeof(struct pkt_RT_UPDATE));
 
   while (1) {
-    pthread_mutex_lock(&lock);
-    ConvertTabletoPkt(&updatePktSend, routerID);  
-    pthread_mutex_unlock(&lock);
-
-    hton_pkt_RT_UPDATE(&updatePktSend);
-    for (i = 0; i < MAX_ROUTERS; i++) {
-      if (!nbrs[i].isNbr) continue;
-
-      updatePktSend.dest_id = htonl(i);
-      nbytes = sendto(udpfd, &updatePktSend, sizeof(struct pkt_RT_UPDATE), 0, 
-                (struct sockaddr *) &neaddr, (socklen_t) neaddrlen);
-    }
-
     gettimeofday(&time, NULL);
 
     pthread_mutex_lock(&lock);
@@ -121,7 +108,19 @@ void * timerPollingThread(void * arg) {
       fprintf(logFile, "%d:Converged\n", (int) (time.tv_sec - firstRTChange));
       fflush(logFile);
     }
+
+    ConvertTabletoPkt(&updatePktSend, routerID);  
     pthread_mutex_unlock(&lock);
+
+    hton_pkt_RT_UPDATE(&updatePktSend);
+    for (i = 0; i < MAX_ROUTERS; i++) {
+      if (!nbrs[i].isNbr) continue;
+
+      updatePktSend.dest_id = htonl(i);
+      nbytes = sendto(udpfd, &updatePktSend, sizeof(struct pkt_RT_UPDATE), 0, 
+                (struct sockaddr *) &neaddr, (socklen_t) neaddrlen);
+    }
+
 
     sleep(UPDATE_INTERVAL);
   }
@@ -159,7 +158,7 @@ int main(int argc, char ** argv) {
   nbytes = sprintf(logname, "router%d.log", routerID);
   logname[nbytes] = '\0';
   logFile = fopen(logname, "w");
-  // logFile = stdout;
+  logFile = stdout;
 
   if ((hp = gethostbyname(argv[2])) == NULL)
     exit(1);
