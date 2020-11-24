@@ -44,13 +44,13 @@ void InitRoutingTbl (struct pkt_INIT_RESPONSE *InitResponse, int myID){
 int idNotInRoute(struct route_entry * re, unsigned int id) {
   int i;
   for (i = 0; i < re->path_len; i++) {
-    printf("%d ", re->path[i]);
+    // printf("%d ", re->path[i]);
     if (re->path[i] == id) {
-      printf("\n");
+      // printf("\n");
       return 0;
     }
   }
-  printf("\n");
+  // printf("\n");
   return 1;
 }
 

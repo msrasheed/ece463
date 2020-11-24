@@ -69,7 +69,7 @@ void * udpPollingThread(void * arg) {
     if (UpdateRoutes(&updatePkt, nbrs[updatePkt.sender_id].cost, routerID)) {
       lastRTChange = time.tv_sec;
       converged_flag = NOT_CONVERGED;
-      printf("from update: sender %d\n", updatePkt.sender_id);
+      // printf("from update: sender %d\n", updatePkt.sender_id);
       PrintRoutes(logFile, routerID);
       fflush(logFile);
     }
@@ -158,7 +158,7 @@ int main(int argc, char ** argv) {
   nbytes = sprintf(logname, "router%d.log", routerID);
   logname[nbytes] = '\0';
   logFile = fopen(logname, "w");
-  logFile = stdout;
+  // logFile = stdout;
 
   if ((hp = gethostbyname(argv[2])) == NULL)
     exit(1);
